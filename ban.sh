@@ -86,11 +86,12 @@ else
     else
         time_diff=$((interval + 1))
     fi
+    query_after=$(date -d "-2 hours" +%s);
     if (( time_diff > interval )); then
         date +%s > "$timestamp_file"
         query="select ip from ips"
     else
-        query="select ip from ips where banned != '8'"
+        query="select ip from ips where banned != '8' and ts >= '${query_after}'"
     fi
         for i in $(sqlite3 -list "${thisdir}/datatrap.db" "${query}" 2>/dev/null | tail -n+2 | sort | uniq -c); do 
             cnt=$(echo $i|awk '{print $1}'); 
