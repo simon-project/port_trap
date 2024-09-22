@@ -134,7 +134,7 @@ EOF
 
     echo "Creating cron job at $CRON_FILE"
     echo 'PATH="${PATH}:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"' | sudo tee "$CRON_FILE" > /dev/null
-    echo "*/3 * * * * root ${SCRIPT_DIR}/ban.sh >/dev/null 2>&1" | sudo tee -a "$CRON_FILE" > /dev/null
+    echo "*/3 * * * * root /usr/bin/flock -xn /tmp/port_trap_cron.lock -c '${SCRIPT_DIR}/ban.sh' >/dev/null 2>&1" | sudo tee -a "$CRON_FILE" > /dev/null
 
     echo "Restarting cron service"
     sudo systemctl restart cron
