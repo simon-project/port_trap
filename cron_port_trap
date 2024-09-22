@@ -1,2 +1,0 @@
-PATH="${PATH}:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-*/3 * * * * root /opt/port_trap/ban.sh >/dev/null 2>&1
