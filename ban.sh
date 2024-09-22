@@ -83,7 +83,7 @@ else
             cip=$(echo $i|awk '{print $2}');
             if [[ "${cnt}" -ge "${fpb}" ]]; then
                 wl=$(wlcheck "${cip}");
-                echo "${cip}";
+                #echo "Permanent ban: ${cip}";
                 if [[ "$(echo ${cip} | grep ':' | wc -l)" != "0" ]]; then
                     inipt=$(ipset test port_trap_v6_perm "${cip}" 2>/dev/null && echo 1 || echo 0)
                     #inipt=$(ip6tables-save | grep -v grep | grep "${cip}/" | grep 'Permanent trap banned' | wc -l)
