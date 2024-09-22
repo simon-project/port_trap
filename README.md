@@ -112,7 +112,7 @@ systemctl restart port_trap
 
 По истечению таймаута, блокировка будет снята. В случае повторного подключения с того же IP на порт любой из ловушек, блокировка будет установлена вновь, однако таймаут будет увеличен в квадратичной прогрессии, т.е. при второй блокировке, таймаут будет увеличен по формуте `Timeout = Timeout * (2*2)`, при третьей блокировке, таймаут увеличивается по формуле `Timeout = Timeout * (3*3)` и так далее, при достижении количества блокировок указанного в файле for_permanent_ban.txt - данный IP будет заблокирован перманентно.
 
-Блокировки выполняются при помощи iptables, с комментариями вида "trap on port ХХ" и "Permanent trap banned".
+Блокировки выполняются при помощи iptables в связке с ipset для наилучшей производительности.
 
 ### Файл show.sh
 
@@ -268,7 +268,7 @@ Once the service is started and the traps are set, any connection to any of the 
 
 After the timeout has expired, the blocking will be lifted. In the case of a repeated connection from the same IP to any of the traps, blocking will be established again, but the timeout will increase in a quadratic progression, i.e., upon the second blocking, the timeout will increase according to the formula `Timeout = Timeout * (2*2)`, upon the third blocking, the timeout increases according to the formula `Timeout = Timeout * (3*3)` etc, and when the number of blocks indicated in the for_permanent_ban.txt file is reached, that IP will be permanently blocked.
 
-Blockings are carried out using iptables, with comments like "trap on port XX" and "Permanent trap banned".
+Blocking is carried out using iptables with ipset for improved performance.
 
 ### The show.sh File
 
