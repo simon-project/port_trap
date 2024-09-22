@@ -24,6 +24,7 @@ function wlcheck() {
     echo "${wl}";
 }
 
+#temporary ban
 if [[ "${1}" != "" && "${2}" != "" ]]; then
     wl=$(wlcheck "${1}");
     if [[ "${wl}" != "1" ]]; then
@@ -40,8 +41,6 @@ if [[ "${1}" != "" && "${2}" != "" ]]; then
         fi
     fi
 else
-    #echo "Unban by timeout...";
-    #iptables -A INPUT -s 12.12.12.12/32 -j DROP -m comment --comment "test comment"
     for i in $(sqlite3 -list "${thisdir}/datatrap.db" "select id,ip,port,inet from ips where banned=1 and delafter < $(date +%s)" 2>/dev/null | tail -n+2); do
         ipid=$(echo ${i}| awk -F '|' '{print $1}'); 
         ipip=$(echo ${i}| awk -F '|' '{print $2}');
@@ -52,26 +51,24 @@ else
         listed=$(iptables-save | grep "A INPUT -s ${ipip}/32 -m comment --comment \"trap on port ${ipport}\" -j DROP" | wc -l)
         if [[ "${ipinet}" == "4" ]]; then
             if [[ "${listed}" != "0" ]]; then
-                #echo "Try unban ${ipip}, listed: ${listed}";
                 logger -t port_trap.py "Unban IPv4: ${ipip}"
                 iptables -D INPUT -s "${ipip}/32" -m comment --comment "trap on port ${ipport}" -j DROP;
             fi
         else
             listed=$(ip6tables-save | grep "A INPUT -s ${ipip}/128 -m comment --comment \"trap on port ${ipport}\" -j DROP" | wc -l)
             if [[ "${listed}" != "0" ]]; then
-                #echo "Try unban ${ipip}, listed: ${listed}";
                 logger -t port_trap.py "Unban IPv6: ${ipip}"
                 ip6tables -D INPUT -s "${ipip}/128" -m comment --comment "trap on port ${ipport}" -j DROP;
             fi
         fi
     done
+
     #permanent_ban
     fpb=$(head -1 "${thisdir}/for_permanent_ban.txt");
     OIFS=${IFS}; IFS=$'\n';
         for i in $(sqlite3 -list "${thisdir}/datatrap.db" "select ip from ips" 2>/dev/null | tail -n+2 | sort | uniq -c); do 
             cnt=$(echo $i|awk '{print $1}'); 
             cip=$(echo $i|awk '{print $2}');
-            #echo "CNT: ${cnt} CIP: ${cip}";
             if [[ "${cnt}" -ge "${fpb}" ]]; then
                 wl=$(wlcheck "${cip}");
                 if [[ "$(echo ${cip} | grep ':' | wc -l)" != "0" ]]; then

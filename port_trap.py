@@ -46,12 +46,11 @@ def check_wl(ip_to_check):
         try:
             regex = re.compile(pattern)
             if regex.match(ip_to_check):
-                #print(f"IP '{ip_to_check}' соответствует шаблону: {pattern} - whitelisted")
                 matched=True
-            #else:
-                #print(f"Строка '{ip_to_check}' не соответствует шаблону: {pattern}")
-               # matched=False
         except re.error:
+            syslog.openlog(ident="port_trap.py", logoption=syslog.LOG_PID, facility=syslog.LOG_USER)
+            syslog.syslog(syslog.LOG_ERR, "ERROR: Incorrect regex pattern in whitelist.txt: "+str(pattern))
+            syslog.closelog()
             print(f"Некорректное регулярное выражение: {pattern}")
             matched=False
     return matched
@@ -102,7 +101,6 @@ while True:
         indb+=1
         indb = indb * indb
         btimeout=int(sys.argv[2]) * indb
-        #print('Trap touched on port '+str(addr[0])+' factor: '+str(indb)+' timeout: '+str(btimeout))
         sl.execute("insert into ips (ts, delafter, ip, port, detected, banned, inet) values ('"+str(int(time.time()))+"','"+str((int(time.time())+int(btimeout)))+"','"+str(addr[0])+"','"+str(sys.argv[1])+"','"+str(datetime.datetime.now())+"','1','"+str(inet)+"')")
         slcon.commit()
         slcon.close()
