@@ -77,7 +77,22 @@ else
     #permanent_ban
     fpb=$(head -1 "${thisdir}/for_permanent_ban.txt");
     OIFS=${IFS}; IFS=$'\n';
-        for i in $(sqlite3 -list "${thisdir}/datatrap.db" "select ip from ips" 2>/dev/null | tail -n+2 | sort | uniq -c); do 
+    timestamp_file="${thisdir}/last_full_query_timestamp"
+    if [[ -f "$timestamp_file" ]]; then
+        last_run=$(head -1 "$timestamp_file")
+        current_time=$(date +%s)
+        time_diff=$(( current_time - last_run ))
+        interval=86400
+    else
+        time_diff=$((interval + 1))
+    fi
+    if (( time_diff > interval )); then
+        date +%s > "$timestamp_file"
+        query="select ip from ips"
+    else
+        query="select ip from ips where banned != '8'"
+    fi
+        for i in $(sqlite3 -list "${thisdir}/datatrap.db" "${query}" 2>/dev/null | tail -n+2 | sort | uniq -c); do 
             cnt=$(echo $i|awk '{print $1}'); 
             cip=$(echo $i|awk '{print $2}');
             if [[ "${cnt}" -ge "${fpb}" ]]; then
@@ -100,6 +115,7 @@ else
                         ipset add port_trap_perm "${cip}"
                         #iptables -A INPUT -s "${cip}/32" -m comment --comment "Permanent trap banned" -j DROP;
                     fi
+                    sqlite3 "${thisdir}/datatrap.db" "update ips set banned=8 where ip='${cip}'" 2>/dev/null
                 fi
             fi
         done
