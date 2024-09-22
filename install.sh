@@ -58,6 +58,80 @@ EOF
 
     chmod +x "${SCRIPT_DIR}"/*.sh "${SCRIPT_DIR}"/*.py
 
+    echo "";
+
+    if type apt-get > /dev/null 2>&1; then
+        apt-get update > /dev/null 2>&1
+        COS="deb"
+        INSTCMD="apt-get"
+    elif type yum > /dev/null 2>&1; then
+        COS="rh"
+        INSTCMD="yum"
+    elif type pacman > /dev/null 2>&1; then
+        COS="arch"
+        INSTCMD="pacman"
+    else
+        COS="nan"
+    fi
+
+    if ! type ipset > /dev/null 2>&1; then
+        echo "ipset required. Installing..."
+
+        case "$INSTCMD" in
+            apt-get)
+                sudo ${INSTCMD} install -y ipset
+                ;;
+            yum)
+                sudo ${INSTCMD} install -y ipset
+                ;;
+            pacman)
+                sudo ${INSTCMD} -Sy --noconfirm ipset
+                ;;
+            *)
+                echo "ERROR: Can not detect OS package manager. Please, install ipset manually and run ./install.sh again."
+                exit 1
+                ;;
+        esac
+    fi
+
+    if ! type ipset > /dev/null 2>&1; then
+        echo "ERROR: ipset is not installed ot not available."
+        exit 1
+    fi
+
+    if ! ipset list port_trap > /dev/null 2>&1; then
+        sudo ipset create port_trap hash:ip
+        echo "Success ipset port_trap created."
+    fi
+    if ! ipset list port_trap_perm > /dev/null 2>&1; then
+        sudo ipset create port_trap_perm hash:ip
+        echo "Success ipset port_trap_perm created."
+    fi
+    if ! ipset list port_trap_v6 > /dev/null 2>&1; then
+        sudo ipset create port_trap_v6 hash:ip family inet6
+        echo "Success ipset port_trap_v6 created."
+    fi
+    if ! ipset list port_trap_v6_perm > /dev/null 2>&1; then
+        sudo ipset create port_trap_v6_perm hash:ip family inet6
+        echo "Success ipset port_trap_v6_perm created."
+    fi
+    if ! sudo iptables-save | grep -q -- "-A INPUT -m set --match-set port_trap src -j DROP"; then
+        sudo iptables -A INPUT -m set --match-set port_trap src -j DROP
+        echo "Success iptables rule created."
+    fi
+    if ! sudo iptables-save | grep -q -- "-A INPUT -m set --match-set port_trap_perm src -j DROP"; then
+        sudo iptables -A INPUT -m set --match-set port_trap_perm src -j DROP
+        echo "Success iptables perm rule created."
+    fi
+    if ! sudo ip6tables-save | grep -q -- "-A INPUT -m set --match-set port_trap_v6 src -j DROP"; then
+        sudo ip6tables -A INPUT -m set --match-set port_trap_v6 src -j DROP
+        echo "Success ip6tables rule created."
+    fi
+    if ! sudo ip6tables-save | grep -q -- "-A INPUT -m set --match-set port_trap_v6_perm src -j DROP"; then
+        sudo ip6tables -A INPUT -m set --match-set port_trap_v6_perm src -j DROP
+        echo "Success ip6tables perm rule created."
+    fi
+
     echo "Creating cron job at $CRON_FILE"
     echo 'PATH="${PATH}:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"' | sudo tee "$CRON_FILE" > /dev/null
     echo "*/3 * * * * root ${SCRIPT_DIR}/ban.sh >/dev/null 2>&1" | sudo tee -a "$CRON_FILE" > /dev/null
@@ -67,6 +141,40 @@ EOF
 }
 
 uninstall_unit() {
+    if sudo iptables-save | grep -q -- "-A INPUT -m set --match-set port_trap src -j DROP"; then
+        sudo iptables -D INPUT -m set --match-set port_trap src -j DROP
+        echo "Success deleted iptables rule."
+    fi
+    if sudo iptables-save | grep -q -- "-A INPUT -m set --match-set port_trap_perm src -j DROP"; then
+        sudo iptables -D INPUT -m set --match-set port_trap_perm src -j DROP
+        echo "Success deleted iptables perm rule."
+    fi
+    if sudo ipset list port_trap > /dev/null 2>&1; then
+        sudo ipset destroy port_trap
+        echo "Success deleted ipset port_trap."
+    fi
+    if sudo ipset list port_trap_perm > /dev/null 2>&1; then
+        sudo ipset destroy port_trap_perm 
+        echo "Success deleted ipset port_trap_perm."
+    fi
+    if sudo ip6tables-save | grep -q -- "-A INPUT -m set --match-set port_trap_v6 src -j DROP"; then
+        sudo ip6tables -D INPUT -m set --match-set port_trap_v6 src -j DROP
+        echo "Success deleted ip6tables rule."
+    fi
+    if sudo ip6tables-save | grep -q -- "-A INPUT -m set --match-set port_trap_v6_perm src -j DROP"; then
+        sudo ip6tables -D INPUT -m set --match-set port_trap_v6_perm src -j DROP
+        echo "Success deleted ip6tables perm rule."
+    fi
+    if sudo ipset list port_trap_v6 > /dev/null 2>&1; then
+        sudo ipset destroy port_trap_v6
+        echo "Success deleted ipset port_trap_v6."
+    fi
+    if sudo ipset list port_trap_v6_perm > /dev/null 2>&1; then
+        sudo ipset destroy port_trap_v6_perm
+        echo "Success deleted ipset port_trap_v6_perm."
+    fi
+
+
     if [ -f "$UNIT_FILE" ]; then
         echo "Removing systemd unit file at $UNIT_FILE"
         sudo systemctl disable port_trap.service

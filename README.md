@@ -8,7 +8,7 @@
 
 ## Требования
 
-ОС Linix, systemd, iptables, sqlite3, python3, cron/crontab, ip.
+ОС Linix, systemd, iptables, ipset, sqlite3, python3, cron/crontab, ip.
 
 ## Установка
 
@@ -164,7 +164,7 @@ It’s simple. If someone is trying to enter through a window, ignoring the door
 
 ## Requirements
 
-Linux OS, systemd, iptables, sqlite3, python3, cron/crontab, ip.
+Linux OS, systemd, iptables, ipset, sqlite3, python3, cron/crontab, ip.
 
 ## Installation
 

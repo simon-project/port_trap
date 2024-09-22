@@ -28,15 +28,23 @@ function wlcheck() {
 if [[ "${1}" != "" && "${2}" != "" ]]; then
     wl=$(wlcheck "${1}");
     if [[ "${wl}" != "1" ]]; then
-        listed=$(iptables-save | grep "s ${1}/" | grep "trap on port" | wc -l)
+        if [[ "$(echo ${1} | grep ':' | wc -l)" == "0" ]]; then
+            #listed=$(iptables-save | grep "s ${1}/" | grep "trap on port" | wc -l)
+            listed=$(ipset test port_trap "${1}" 2>/dev/null && echo 1 || echo 0)
+        else
+            #listed=$(ip6tables-save | grep "s ${1}/" | grep "trap on port" | wc -l)
+            listed=$(ipset test port_trap_v6 "${1}" 2>/dev/null && echo 1 || echo 0)
+        fi
         if [[ "${listed}" == "0" ]]; then
             banned=1
             if [[ "$(echo ${1} | grep ':' | wc -l)" == "0" ]]; then
                 logger -t port_trap.py "Ban IPv4: ${1}"
-                iptables -A INPUT -s "${1}/32" -m comment --comment "trap on port ${2}" -j DROP;
+                ipset add port_trap "${1}"
+                #iptables -A INPUT -s "${1}/32" -m comment --comment "trap on port ${2}" -j DROP;
             else
                 logger -t port_trap.py "Ban IPv6: ${1}"
-                ip6tables -A INPUT -s "${1}/128" -m comment --comment "trap on port ${2}" -j DROP;
+                ipset add port_trap_v6 "${1}"
+                #ip6tables -A INPUT -s "${1}/128" -m comment --comment "trap on port ${2}" -j DROP;
             fi
         fi
     fi
@@ -48,17 +56,21 @@ else
         ipinet=$(echo ${i}| awk -F '|' '{print $4}');
         echo "${ipid} ${ipip} ${ipport} ${ipinet}";
         sqlite3 "${thisdir}/datatrap.db" "update ips set banned=0 where id='${ipid}'" 2>/dev/null
-        listed=$(iptables-save | grep "A INPUT -s ${ipip}/32 -m comment --comment \"trap on port ${ipport}\" -j DROP" | wc -l)
         if [[ "${ipinet}" == "4" ]]; then
+            listed=$(ipset test port_trap "${ipip}" 2>/dev/null && echo 1 || echo 0)
+            #listed=$(iptables-save | grep "A INPUT -s ${ipip}/32 -m comment --comment \"trap on port ${ipport}\" -j DROP" | wc -l)
             if [[ "${listed}" != "0" ]]; then
                 logger -t port_trap.py "Unban IPv4: ${ipip}"
-                iptables -D INPUT -s "${ipip}/32" -m comment --comment "trap on port ${ipport}" -j DROP;
+                ipset del port_trap "${ipip}"
+                #iptables -D INPUT -s "${ipip}/32" -m comment --comment "trap on port ${ipport}" -j DROP;
             fi
         else
-            listed=$(ip6tables-save | grep "A INPUT -s ${ipip}/128 -m comment --comment \"trap on port ${ipport}\" -j DROP" | wc -l)
+            listed=$(ipset test port_trap_v6 "${ipip}" 2>/dev/null && echo 1 || echo 0)
+            #listed=$(ip6tables-save | grep "A INPUT -s ${ipip}/128 -m comment --comment \"trap on port ${ipport}\" -j DROP" | wc -l)
             if [[ "${listed}" != "0" ]]; then
                 logger -t port_trap.py "Unban IPv6: ${ipip}"
-                ip6tables -D INPUT -s "${ipip}/128" -m comment --comment "trap on port ${ipport}" -j DROP;
+                ipset del port_trap_v6 "${ipip}"
+                #ip6tables -D INPUT -s "${ipip}/128" -m comment --comment "trap on port ${ipport}" -j DROP;
             fi
         fi
     done
@@ -71,18 +83,23 @@ else
             cip=$(echo $i|awk '{print $2}');
             if [[ "${cnt}" -ge "${fpb}" ]]; then
                 wl=$(wlcheck "${cip}");
+                echo "${cip}";
                 if [[ "$(echo ${cip} | grep ':' | wc -l)" != "0" ]]; then
-                    inipt=$(ip6tables-save | grep -v grep | grep "${cip}/" | grep 'Permanent trap banned' | wc -l)
+                    inipt=$(ipset test port_trap_v6_perm "${cip}" 2>/dev/null && echo 1 || echo 0)
+                    #inipt=$(ip6tables-save | grep -v grep | grep "${cip}/" | grep 'Permanent trap banned' | wc -l)
                 else
-                    inipt=$(iptables-save | grep -v grep | grep "${cip}/" | grep 'Permanent trap banned' | wc -l)
+                    inipt=$(ipset test port_trap_perm "${cip}" 2>/dev/null && echo 1 || echo 0)
+                    #inipt=$(iptables-save | grep -v grep | grep "${cip}/" | grep 'Permanent trap banned' | wc -l)
                 fi
                 if [[ "${wl}" != "1" && "${inipt}" == "0" ]]; then
                     if [[ "$(echo ${cip} | grep ':' | wc -l)" != "0" ]]; then
                         logger -t port_trap.py "Permanent ban IPv6: ${cip}"
-                        ip6tables -A INPUT -s "${cip}/128" -m comment --comment "Permanent trap banned" -j DROP;
+                        ipset add port_trap_v6_perm "${cip}"
+                        #ip6tables -A INPUT -s "${cip}/128" -m comment --comment "Permanent trap banned" -j DROP;
                     else
                         logger -t port_trap.py "Permanent ban IPv4: ${cip}"
-                        iptables -A INPUT -s "${cip}/32" -m comment --comment "Permanent trap banned" -j DROP;
+                        ipset add port_trap_perm "${cip}"
+                        #iptables -A INPUT -s "${cip}/32" -m comment --comment "Permanent trap banned" -j DROP;
                     fi
                 fi
             fi

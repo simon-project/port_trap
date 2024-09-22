@@ -2,6 +2,31 @@
 thisdir=$(dirname -- "$(realpath -- "$0")")
 cd "${thisdir}"
 
+if ! ipset list port_trap > /dev/null 2>&1; then
+    sudo ipset create port_trap hash:ip
+fi
+if ! ipset list port_trap_perm > /dev/null 2>&1; then
+    sudo ipset create port_trap_perm hash:ip
+fi
+if ! ipset list port_trap_v6 > /dev/null 2>&1; then
+    sudo ipset create port_trap_v6 hash:ip family inet6
+fi
+if ! ipset list port_trap_v6_perm > /dev/null 2>&1; then
+    sudo ipset create port_trap_v6_perm hash:ip family inet6
+fi
+if ! sudo iptables-save | grep -q -- "-A INPUT -m set --match-set port_trap src -j DROP"; then
+    sudo iptables -A INPUT -m set --match-set port_trap src -j DROP
+fi
+if ! sudo iptables-save | grep -q -- "-A INPUT -m set --match-set port_trap_perm src -j DROP"; then
+    sudo iptables -A INPUT -m set --match-set port_trap_perm src -j DROP
+fi
+if ! sudo ip6tables-save | grep -q -- "-A INPUT -m set --match-set port_trap_v6 src -j DROP"; then
+    sudo ip6tables -A INPUT -m set --match-set port_trap_v6 src -j DROP
+fi
+if ! sudo ip6tables-save | grep -q -- "-A INPUT -m set --match-set port_trap_v6_perm src -j DROP"; then
+    sudo ip6tables -A INPUT -m set --match-set port_trap_v6_perm src -j DROP
+fi
+
 pids=()
 sleep 0.5;
 for i in $(cat "${thisdir}/list_of_ports.txt" | grep -vE "^#"); do 
