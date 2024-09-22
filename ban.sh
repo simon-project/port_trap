@@ -54,7 +54,6 @@ else
         ipip=$(echo ${i}| awk -F '|' '{print $2}');
         ipport=$(echo ${i}| awk -F '|' '{print $3}');
         ipinet=$(echo ${i}| awk -F '|' '{print $4}');
-        echo "${ipid} ${ipip} ${ipport} ${ipinet}";
         sqlite3 "${thisdir}/datatrap.db" "update ips set banned=0 where id='${ipid}'" 2>/dev/null
         if [[ "${ipinet}" == "4" ]]; then
             listed=$(ipset test port_trap "${ipip}" 2>/dev/null && echo 1 || echo 0)
