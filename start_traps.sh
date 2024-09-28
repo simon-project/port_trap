@@ -1,4 +1,5 @@
 #!/bin/bash
+logger -t port_trap.py "Enable port traps..."
 thisdir=$(dirname -- "$(realpath -- "$0")")
 cd "${thisdir}"
 
@@ -45,5 +46,5 @@ for i in $(cat "${thisdir}/list_of_ports.txt" | grep -vE "^#"); do
     pids+=($!)
     sleep 0.2
 done
-
+logger -t port_trap.py "Port traps enabled."
 wait "${pids[@]}"

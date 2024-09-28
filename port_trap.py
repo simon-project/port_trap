@@ -86,6 +86,8 @@ while True:
     sock.bind((trap_addr, trap_port))
     sock.listen(1)
     conn, addr = sock.accept()
+    conn.close()
+    time.sleep(0.1)
     if check_wl(addr[0]):
         syslog.openlog(ident="port_trap.py", logoption=syslog.LOG_PID, facility=syslog.LOG_USER)
         syslog.syslog(syslog.LOG_NOTICE, 'WHITELISTED trap touched on port '+str(trap_port)+': '+str(addr[0]))
@@ -105,5 +107,3 @@ while True:
         slcon.commit()
         slcon.close()
         os.system(str(ban)+" "+str(addr[0])+" "+str(trap_port))
-    conn.close()
-    time.sleep(0.1)
