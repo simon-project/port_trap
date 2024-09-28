@@ -131,7 +131,14 @@ EOF
         sudo ip6tables -A INPUT -m set --match-set port_trap_v6_perm src -j DROP
         echo "Success ip6tables perm rule created."
     fi
-
+    if [ -f "/etc/iptables/rules.v4" ]; then
+        iptables-save > "/etc/iptables/rules.v4"
+        echo "Saved iptables rules to /etc/iptables/rules.v4"
+    fi
+    if [ -f "/etc/iptables/rules.v6" ]; then
+        ip6tables-save > "/etc/iptables/rules.v6"
+        echo "Saved ip6tables rules to /etc/iptables/rules.v6"
+    fi
     echo "Creating cron job at $CRON_FILE"
     echo 'PATH="${PATH}:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"' | sudo tee "$CRON_FILE" > /dev/null
     echo "*/3 * * * * root /usr/bin/flock -xn /tmp/port_trap_cron.lock -c '${SCRIPT_DIR}/ban.sh' >/dev/null 2>&1" | sudo tee -a "$CRON_FILE" > /dev/null
@@ -172,6 +179,14 @@ uninstall_unit() {
     if sudo ipset list port_trap_v6_perm > /dev/null 2>&1; then
         sudo ipset destroy port_trap_v6_perm
         echo "Success deleted ipset port_trap_v6_perm."
+    fi
+    if [ -f "/etc/iptables/rules.v4" ]; then
+        sed -i 's/-A INPUT -m set --match-set port_trap src -j DROP//g' "/etc/iptables/rules.v4"
+        sed -i 's/-A INPUT -m set --match-set port_trap_perm src -j DROP//g' "/etc/iptables/rules.v4"
+    fi
+    if [ -f "/etc/iptables/rules.v6" ]; then
+        sed -i 's/-A INPUT -m set --match-set port_trap_v6 src -j DROP//g' "/etc/iptables/rules.v6"
+        sed -i 's/-A INPUT -m set --match-set port_trap_v6_perm src -j DROP//g' "/etc/iptables/rules.v6"
     fi
 
 
