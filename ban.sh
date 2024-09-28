@@ -7,6 +7,20 @@ if [ ! -f "${thisdir}/datatrap.db" ]; then
     exit 1;
 fi
 
+if ! sudo iptables-save | grep -q -- "-A INPUT -m set --match-set port_trap src -j DROP"; then
+    sudo iptables -A INPUT -m set --match-set port_trap src -j DROP
+fi
+if ! sudo iptables-save | grep -q -- "-A INPUT -m set --match-set port_trap_perm src -j DROP"; then
+    sudo iptables -A INPUT -m set --match-set port_trap_perm src -j DROP
+fi
+if ! sudo ip6tables-save | grep -q -- "-A INPUT -m set --match-set port_trap_v6 src -j DROP"; then
+    sudo ip6tables -A INPUT -m set --match-set port_trap_v6 src -j DROP
+fi
+if ! sudo ip6tables-save | grep -q -- "-A INPUT -m set --match-set port_trap_v6_perm src -j DROP"; then
+    sudo ip6tables -A INPUT -m set --match-set port_trap_v6_perm src -j DROP
+fi
+
+
 function wlcheck() {
     wl="0";
     for i in $(ip a | grep -E 'inet(6)? ' | awk '{print $2}'| awk -F '/' '{print $1}'); do 
