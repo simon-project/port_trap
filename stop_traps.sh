@@ -8,7 +8,7 @@ if [ ! -d "${thisdir}/ipset" ]; then
 fi
 if [ -d "${thisdir}/ipset" ]; then
     for set in $(ipset list -n); do
-        ipset list "$set" > "${thisdir}/ipset/$set.rules"
+        ipset save "$set" > "${thisdir}/ipset/$set.rules"
     done
 fi
 
