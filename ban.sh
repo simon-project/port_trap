@@ -7,20 +7,6 @@ if [ ! -f "${thisdir}/datatrap.db" ]; then
     exit 1;
 fi
 
-if ! sudo iptables-save | grep -q -- "-A INPUT -m set --match-set port_trap src -j DROP"; then
-    sudo iptables -A INPUT -m set --match-set port_trap src -j DROP
-fi
-if ! sudo iptables-save | grep -q -- "-A INPUT -m set --match-set port_trap_perm src -j DROP"; then
-    sudo iptables -A INPUT -m set --match-set port_trap_perm src -j DROP
-fi
-if ! sudo ip6tables-save | grep -q -- "-A INPUT -m set --match-set port_trap_v6 src -j DROP"; then
-    sudo ip6tables -A INPUT -m set --match-set port_trap_v6 src -j DROP
-fi
-if ! sudo ip6tables-save | grep -q -- "-A INPUT -m set --match-set port_trap_v6_perm src -j DROP"; then
-    sudo ip6tables -A INPUT -m set --match-set port_trap_v6_perm src -j DROP
-fi
-
-
 function wlcheck() {
     wl="0";
     for i in $(ip a | grep -E 'inet(6)? ' | awk '{print $2}'| awk -F '/' '{print $1}'); do 
@@ -104,6 +90,18 @@ else
     if (( time_diff > interval )); then
         date +%s > "$timestamp_file"
         query="select ip from ips"
+        if ! iptables-save | grep -q -- "-A INPUT -m set --match-set port_trap src -j DROP"; then
+            iptables -A INPUT -m set --match-set port_trap src -j DROP
+        fi
+        if ! iptables-save | grep -q -- "-A INPUT -m set --match-set port_trap_perm src -j DROP"; then
+            iptables -A INPUT -m set --match-set port_trap_perm src -j DROP
+        fi
+        if ! ip6tables-save | grep -q -- "-A INPUT -m set --match-set port_trap_v6 src -j DROP"; then
+            ip6tables -A INPUT -m set --match-set port_trap_v6 src -j DROP
+        fi
+        if ! ip6tables-save | grep -q -- "-A INPUT -m set --match-set port_trap_v6_perm src -j DROP"; then
+            ip6tables -A INPUT -m set --match-set port_trap_v6_perm src -j DROP
+        fi
     else
         query="select ip from ips where banned != '8' and ts >= '${query_after}'"
     fi
