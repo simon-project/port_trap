@@ -84,7 +84,7 @@ while True:
         sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 1)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.bind((trap_addr, trap_port))
-    sock.listen(1)
+    sock.listen(32)
     conn, addr = sock.accept()
     time.sleep(0.1)
     conn.close()
