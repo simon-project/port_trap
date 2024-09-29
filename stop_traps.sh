@@ -2,7 +2,6 @@
 
 thisdir=$(dirname -- "$(realpath -- "$0")")
 logger -t port_trap.py "Disable port traps..."
-
 if [ ! -d "${thisdir}/ipset" ]; then
     mkdir "${thisdir}/ipset"
 fi

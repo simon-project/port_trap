@@ -17,46 +17,6 @@ show_help() {
 }
 
 install_unit() {
-    echo "Creating systemd unit file at $UNIT_FILE"
-
-    cat << EOF | sudo tee "$UNIT_FILE" > /dev/null
-[Unit]
-Description=Port Trap Service
-After=network.target
-
-[Service]
-Type=simple
-ExecStart=${SCRIPT_DIR}/start_traps.sh
-ExecStop=${SCRIPT_DIR}/stop_traps.sh
-Restart=on-failure
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-    sudo systemctl daemon-reload
-    sudo systemctl enable port_trap.service
-    echo "Unit file created and enabled."
-
-    declare -A files=(
-        ["list_of_ports.txt"]="list_of_ports.txt.example"
-        ["whitelist.txt"]="whitelist.txt.example"
-        ["for_permanent_ban.txt"]="for_permanent_ban.txt.example"
-    )
-
-    for file in "${!files[@]}"; do
-        if [[ ! -f "$SCRIPT_DIR/$file" ]]; then
-            if [[ -f "$SCRIPT_DIR/${files[$file]}" ]]; then
-                echo "Copying ${files[$file]} to $file"
-                cp "$SCRIPT_DIR/${files[$file]}" "$SCRIPT_DIR/$file"
-            else
-                echo "Error: $file is missing and ${files[$file]} is also not found."
-                exit 1
-            fi
-        fi
-    done
-
-    chmod +x "${SCRIPT_DIR}"/*.sh "${SCRIPT_DIR}"/*.py
 
     echo "";
 
@@ -93,6 +53,49 @@ EOF
                 ;;
         esac
     fi
+
+    echo "Creating systemd unit file at $UNIT_FILE"
+
+    cat << EOF | sudo tee "$UNIT_FILE" > /dev/null
+[Unit]
+Description=Port Trap Service
+After=network-online.target
+Wants=network-online.target
+Before=netfilter-persistent.service
+
+[Service]
+Type=simple
+ExecStart=${SCRIPT_DIR}/start_traps.sh
+ExecStop=${SCRIPT_DIR}/stop_traps.sh
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    sudo systemctl daemon-reload
+    sudo systemctl enable port_trap.service
+    echo "Unit file created and enabled."
+
+    declare -A files=(
+        ["list_of_ports.txt"]="list_of_ports.txt.example"
+        ["whitelist.txt"]="whitelist.txt.example"
+        ["for_permanent_ban.txt"]="for_permanent_ban.txt.example"
+    )
+
+    for file in "${!files[@]}"; do
+        if [[ ! -f "$SCRIPT_DIR/$file" ]]; then
+            if [[ -f "$SCRIPT_DIR/${files[$file]}" ]]; then
+                echo "Copying ${files[$file]} to $file"
+                cp "$SCRIPT_DIR/${files[$file]}" "$SCRIPT_DIR/$file"
+            else
+                echo "Error: $file is missing and ${files[$file]} is also not found."
+                exit 1
+            fi
+        fi
+    done
+
+    chmod +x "${SCRIPT_DIR}"/*.sh "${SCRIPT_DIR}"/*.py
 
     if ! type ipset > /dev/null 2>&1; then
         echo "ERROR: ipset is not installed ot not available."
