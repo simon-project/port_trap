@@ -3,10 +3,10 @@
 thisdir=$(dirname -- "$(realpath -- "$0")")
 logger -t port_trap.py "Disable port traps..."
 
-if [ ! -d "${thisdir}/ipset"]; then
+if [ ! -d "${thisdir}/ipset" ]; then
     mkdir "${thisdir}/ipset"
 fi
-if [ -d "${thisdir}/ipset"]; then
+if [ -d "${thisdir}/ipset" ]; then
     for set in $(ipset list -n); do
         ipset list "$set" > "${thisdir}/ipset/$set.rules"
     done
