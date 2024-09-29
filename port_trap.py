@@ -86,6 +86,7 @@ while True:
     sock.bind((trap_addr, trap_port))
     sock.listen(1)
     conn, addr = sock.accept()
+    time.sleep(0.1)
     conn.close()
     time.sleep(0.1)
     if check_wl(addr[0]):
