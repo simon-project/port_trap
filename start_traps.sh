@@ -3,8 +3,10 @@ logger -t port_trap.py "Enable port traps..."
 thisdir=$(dirname -- "$(realpath -- "$0")")
 cd "${thisdir}"
 
-if [ -f "${thisdir}/ipset.conf" ]; then
-    ipset-restore < "${thisdir}/ipset.conf"
+if [ -d "${thisdir}/ipset"]; then
+    for set in "${thisdir}/ipset/*.rules"; do
+        ipset restore < "${set}"
+    done
 fi
 if ! ipset list port_trap > /dev/null 2>&1; then
     sudo ipset create port_trap hash:ip

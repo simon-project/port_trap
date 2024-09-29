@@ -1,3 +1,4 @@
 datatrap.db
 list_of_ports.txt.my
 whitelist.txt.my
+ipset/*
