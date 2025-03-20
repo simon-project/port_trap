@@ -132,6 +132,14 @@ journalctl -t port_trap.py
 ```
 В лог записывается информация о запуске сервиса (об установке ловушек), о срабатывании ловушек, блокировке IP-адресов, разблокировке IP-адресов, о пермантном бане и об остановке сервиса.
 
+### Просмотр в ipset
+
+Можно посмотреть добавленные IPs в ipset, например, так:
+```
+ipset list port_trap_perm
+ipset list port_trap
+```
+
 ### Удаление
 
 ```
@@ -287,6 +295,14 @@ The service logs information in the system log. You can view the service log usi
 journalctl -t port_trap.py
 ```
 The log records information about the service startup (trap installation), trap triggers, IP address blockings, IP address unblocking, permanent bans, and service shutdown.
+
+### Check in ipset
+
+You can check added IPs in ipset, for example:
+```
+ipset list port_trap_perm
+ipset list port_trap     
+```
 
 ### Uninstall
 
